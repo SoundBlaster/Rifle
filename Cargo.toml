@@ -1,0 +1,12 @@
+[package]
+name = "rifle-rules"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Pure, validated declarative rule evaluation over supplied facts"
+repository = "https://github.com/SoundBlaster/Rifle"
+publish = false
+
+[dependencies]
+serde = "1"
+serde_json = "1"
