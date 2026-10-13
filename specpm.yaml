@@ -1,0 +1,34 @@
+apiVersion: specpm.dev/v0.1
+kind: SpecPackage
+metadata:
+  id: rifle
+  name: Rifle rule engine
+  version: 0.1.0-draft.1
+  summary: Initial validated pure program evaluator; no host filesystem or plugin catalog integration.
+  license: MIT
+  authors:
+  - name: Egor Merkushev
+specs:
+- path: specs/program.spec.yaml
+index:
+  provides:
+    capabilities:
+    - rifle.program.evaluate
+compatibility:
+  platforms:
+  - macos
+  - linux
+  - windows
+  languages:
+  - name: rust
+keywords:
+- rules
+- validation
+- three-valued-logic
+foreignArtifacts:
+- format: hypercode
+  path: specs/hypercode/architecture.hc
+  role: documentation
+- format: hypercode-stylesheet
+  path: specs/hypercode/architecture.hcs
+  role: documentation
