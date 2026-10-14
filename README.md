@@ -43,8 +43,10 @@ only the `program` field from its public examples. Source:
 Product target IDs, marker bindings, exclusions and ambiguous target resolution
 remain host responsibilities. This crate does not load a BuildHunter envelope.
 
-Next stages: canonical identity/JCS, SDK authoring, catalog-level validation and
-measured execution-plan optimization. Hunter/BuildHunter integration is separate.
+Generic package/catalog validation and JCS identity are available: see
+[catalog API and limits](docs/catalog-identity.md). Full plugin validation remains
+a host responsibility. Next stages: SDK authoring, host-specific catalog validation
+and measured execution-plan optimization. Hunter/BuildHunter integration is separate.
 No speed, whole-process memory bound, filesystem correctness or SDK availability
 is claimed by this initial evaluator.
 

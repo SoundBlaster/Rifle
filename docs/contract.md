@@ -59,5 +59,6 @@ programs, not total process RSS or arbitrary host fact sizes.
 
 No candidate name index is implemented: each bounded rule is evaluated directly.
 Optimization must preserve the reference behavior, especially unknowns and
-negative/marker-only rules. No JCS digest, package metadata/targets, marker I/O,
-Swift authoring SDK or cross-language FFI is implemented in this slice.
+negative/marker-only rules. [Generic catalog and JCS identity](catalog-identity.md) are now available as a separate layer.
+BuildHunter-specific package metadata/targets, marker I/O,
+Swift authoring SDK and cross-language FFI remain unimplemented.

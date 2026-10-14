@@ -1,43 +1,14 @@
-use crate::{
-    Error, Expression, FORMAT, Fact, FactType, Plan, Predicate, Rule, Scalar, json::Unique,
-};
+use crate::{Error, Expression, FORMAT, Fact, FactType, Plan, Predicate, Rule, Scalar};
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 
 pub(crate) fn compile(bytes: &[u8]) -> Result<Plan, Error> {
-    if bytes.len() > 1_048_576 {
-        return Err(error("limit_exceeded", "", "program exceeds 1 MiB"));
-    }
-    // A valid depth-8 expression fits below this defensive JSON parser ceiling.
-    let mut depth = 0usize;
-    let mut quoted = false;
-    let mut escaped = false;
-    for &byte in bytes {
-        if quoted {
-            if escaped {
-                escaped = false;
-            } else if byte == b'\\' {
-                escaped = true;
-            } else if byte == b'"' {
-                quoted = false;
-            }
-        } else {
-            match byte {
-                b'"' => quoted = true,
-                b'{' | b'[' => {
-                    depth += 1;
-                    if depth > 32 {
-                        return Err(error("limit_exceeded", "", "JSON nesting exceeds 32"));
-                    }
-                }
-                b'}' | b']' => depth = depth.saturating_sub(1),
-                _ => {}
-            }
-        }
-    }
-    let Unique(value) =
-        serde_json::from_slice(bytes).map_err(|e| error("invalid_shape", "", e.to_string()))?;
-    let root = object(&value, &["format", "facts", "rules"], "")?;
+    let value = crate::json::parse(bytes, 1_048_576)?;
+    compile_value(&value)
+}
+
+pub(crate) fn compile_value(value: &Value) -> Result<Plan, Error> {
+    let root = object(value, &["format", "facts", "rules"], "")?;
     if string(&root["format"], "/format")? != FORMAT {
         return Err(error(
             "unsupported_format",
@@ -72,6 +43,7 @@ pub(crate) fn compile(bytes: &[u8]) -> Result<Plan, Error> {
     let mut ids = HashSet::new();
     let mut rules = Vec::new();
     let mut used = HashSet::new();
+    let mut expression_nodes = 0;
     for (i, v) in input_rules.iter().enumerate() {
         let path = format!("/rules/{i}");
         let o = object(v, &["id", "when"], &path)?;
@@ -86,6 +58,7 @@ pub(crate) fn compile(bytes: &[u8]) -> Result<Plan, Error> {
             nodes: 0,
         };
         let expression = parser.expression(&o["when"], 1, &format!("{path}/when"))?;
+        expression_nodes += parser.nodes;
         rules.push(Rule { id, expression });
     }
     for (i, fact) in facts.iter().enumerate() {
@@ -93,7 +66,11 @@ pub(crate) fn compile(bytes: &[u8]) -> Result<Plan, Error> {
             return Err(error("unused_fact", &format!("/facts/{i}"), &fact.id));
         }
     }
-    Ok(Plan { facts, rules })
+    Ok(Plan {
+        facts,
+        rules,
+        expression_nodes,
+    })
 }
 struct Parser<'a> {
     facts: &'a [Fact],
@@ -214,7 +191,7 @@ fn string<'a>(v: &'a Value, path: &str) -> Result<&'a str, Error> {
     v.as_str()
         .ok_or_else(|| error("invalid_shape", path, "expected string"))
 }
-fn identifier<'a>(v: &'a Value, path: &str) -> Result<&'a str, Error> {
+pub(crate) fn identifier<'a>(v: &'a Value, path: &str) -> Result<&'a str, Error> {
     let s = string(v, path)?;
     if s.len() > 128
         || !s.as_bytes().first().is_some_and(u8::is_ascii_lowercase)

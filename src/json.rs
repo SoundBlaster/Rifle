@@ -57,3 +57,45 @@ impl<'de> Visitor<'de> for UniqueVisitor {
         Ok(Unique(Value::Object(map)))
     }
 }
+
+use crate::Error;
+
+pub(crate) fn parse(bytes: &[u8], max_bytes: usize) -> Result<Value, Error> {
+    if bytes.len() > max_bytes {
+        return Err(error("limit_exceeded", "", "JSON exceeds byte budget"));
+    }
+    // A valid depth-8 expression fits below this defensive JSON parser ceiling.
+    let mut depth = 0usize;
+    let mut quoted = false;
+    let mut escaped = false;
+    for &byte in bytes {
+        if quoted {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                quoted = false;
+            }
+        } else {
+            match byte {
+                b'"' => quoted = true,
+                b'{' | b'[' => {
+                    depth += 1;
+                    if depth > 32 {
+                        return Err(error("limit_exceeded", "", "JSON nesting exceeds 32"));
+                    }
+                }
+                b'}' | b']' => depth = depth.saturating_sub(1),
+                _ => {}
+            }
+        }
+    }
+    let Unique(value) =
+        serde_json::from_slice(bytes).map_err(|e| error("invalid_shape", "", e.to_string()))?;
+    Ok(value)
+}
+
+fn error(code: &'static str, path: &str, message: impl Into<String>) -> Error {
+    Error::new(code, path, message)
+}
