@@ -9,4 +9,6 @@ publish = false
 
 [dependencies]
 serde = "1"
-serde_json = "1"
+serde_json = { version = "1", features = ["float_roundtrip"] }
+serde_json_canonicalizer = "=0.4.1"
+sha2 = "0.10"

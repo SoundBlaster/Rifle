@@ -4,4 +4,10 @@ Rifle
     SemanticValidation
   ValidatedPlan
   Evaluation
+  ContentIdentity
+    CanonicalJson
+    Sha256Digest
+  ProgramCatalog
+    PackageValidation
+    AggregateValidation
   ContractTests

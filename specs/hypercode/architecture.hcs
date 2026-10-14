@@ -16,6 +16,21 @@ Evaluation:
   implementation: "Plan::evaluate + Expression::evaluate"
 ContractTests:
   source: "tests/contract.rs"
+ContentIdentity:
+  source: "src/identity.rs"
+  boundary_spec: "rifle.catalog"
+CanonicalJson:
+  source: "src/identity.rs"
+  implementation: "JsonIdentity + serde_json_canonicalizer 0.4.1"
+Sha256Digest:
+  source: "src/identity.rs"
+ProgramCatalog:
+  source: "src/catalog.rs"
+  boundary_spec: "rifle.catalog"
+PackageValidation:
+  source: "src/catalog.rs"
+AggregateValidation:
+  source: "src/catalog.rs"
 @contract:
   Rifle:
     boundary_spec: string

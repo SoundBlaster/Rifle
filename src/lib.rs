@@ -1,6 +1,10 @@
 //! Pure rule validation and evaluation. The caller supplies facts in declared order.
 //! No filesystem, product vocabulary or mutable scan state belongs to this crate.
+mod catalog;
+mod identity;
 mod json;
+pub use catalog::{Catalog, ProgramPackage};
+pub use identity::{JsonIdentity, Sha256Digest};
 mod validate;
 
 use std::collections::BTreeSet;
@@ -109,6 +113,7 @@ pub(crate) struct Rule {
 pub struct Plan {
     pub(crate) facts: Vec<Fact>,
     pub(crate) rules: Vec<Rule>,
+    pub(crate) expression_nodes: usize,
 }
 impl Plan {
     /// Accept only the pure Rifle program, not the BuildHunter plugin envelope.
@@ -117,6 +122,12 @@ impl Plan {
     }
     pub fn facts(&self) -> &[Fact] {
         &self.facts
+    }
+    pub fn rule_count(&self) -> usize {
+        self.rules.len()
+    }
+    pub fn expression_nodes(&self) -> usize {
+        self.expression_nodes
     }
     pub fn fact_ids(&self) -> impl Iterator<Item = &str> {
         self.facts.iter().map(|x| x.id.as_str())
